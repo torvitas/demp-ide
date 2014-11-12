@@ -1,0 +1,13 @@
+[Unit]
+Description=Development Container
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker start ###NAMESPACE###-development-###DEVELOPER###
+ExecStart=/usr/bin/docker attach ###NAMESPACE###-development-###DEVELOPER###
+ExecStop=/usr/local/bin/docker stop ###NAMESPACE###-development-###DEVELOPER###
+
+[Install]
+WantedBy=multi-user.target
