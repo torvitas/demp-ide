@@ -1,12 +1,28 @@
 [Unit]
 Description=Development Container
 Requires=docker.service
+Requires=###NAMESPACE###-nginx.service
+Requires=###NAMESPACE###-php-fpm.service
 
 [Service]
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=-/usr/bin/docker start ###NAMESPACE###-development-###DEVELOPER###
+ExecStartPre=-/usr/bin/docker run --volumes-from ###NAMESPACE###-development-###DEVELOPER### --name=###NAMESPACE###-development-###DEVELOPER###-data busybox
+ExecStartPre=-/usr/bin/docker commit ###NAMESPACE###-development-###DEVELOPER### torvitas/###NAMESPACE###-development-###DEVELOPER###
+ExecStartPre=-/usr/bin/docker stop ###NAMESPACE###-development-###DEVELOPER###
+ExecStartPre=-/usr/bin/docker rm ###NAMESPACE###-development-###DEVELOPER###
+ExecStartPre=-/usr/bin/docker run --volumes-from ###NAMESPACE###-nginx \
+				--volumes-from ###NAMESPACE###-development-###DEVELOPER###-data \
+				--name ###NAMESPACE###-development-###DEVELOPER### \
+				--volumes-from ###NAMESPACE###-php-fpm \
+				--link ###NAMESPACE###-mariadb:mariadb \
+				--link ###NAMESPACE###-php-fpm:fpm \
+				-v /home/###DEVELOPER###/volumes/workspace \
+				-d \
+				-p ###SSHPORT###:22 \
+				torvitas/###NAMESPACE###-development-###DEVELOPER###
 ExecStart=/usr/bin/docker attach ###NAMESPACE###-development-###DEVELOPER###
+ExecStartPost=-/usr/bin/docker rm ###NAMESPACE###-development-###DEVELOPER###-data
 ExecStop=/usr/local/bin/docker stop ###NAMESPACE###-development-###DEVELOPER###
 
 [Install]

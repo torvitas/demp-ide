@@ -4,11 +4,12 @@ build:
 	docker build -t $(DOCKERPREFIX)development .
 
 install: check-nginx check-developer check-port check-key
-	docker run -d --name=$(NAMESPACE)-development-$(DEVELOPER) -e "DEVELOPER=$(DEVELOPER)" -e "KEY=$(KEY)" --volumes-from $(NAMESPACE)-nginx --link $(NAMESPACE)-mariadb:mariadb -p $(SSHPORT):22 -v /home/$(DEVELOPER)/volumes/workspace $(DOCKERPREFIX)development
+	docker run -d --name=$(NAMESPACE)-development-$(DEVELOPER) -e "DEVELOPER=$(DEVELOPER)" -e "KEY=$(KEY)" --volumes-from $(NAMESPACE)-nginx --volumes-from $(NAMESPACE)-php-fpm --link $(NAMESPACE)-mariadb:mariadb -p $(SSHPORT):22 -v /home/$(DEVELOPER)/volumes/workspace $(DOCKERPREFIX)development
 	docker exec $(NAMESPACE)-development-$(DEVELOPER) /bin/bash -c "chmod +x /start.sh && /start.sh && rm /start.sh"
 	docker stop $(NAMESPACE)-development-$(DEVELOPER)
-	sudo cp systemd/$(NAMESPACE)-development-developer.service.tmpl $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-development-$(DEVELOPER).service
+	sudo cp systemd/docker-development-developer.service.tmpl $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-development-$(DEVELOPER).service
 	sudo sed -i s/$(DEVELOPERPLACEHOLDER)/$(DEVELOPER)/g $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-development-$(DEVELOPER).service
+	sudo sed -i s/$(SSHPORTPLACEHOLDER)/$(SSHPORT)/g $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-development-$(DEVELOPER).service
 	sudo sed -i s/$(NAMESPACEPLACEHOLDER)/$(NAMESPACE)/g $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-development-$(DEVELOPER).service
 	sudo sed -i s/--volumes-from\ $(NAMESPACE)-development-$(DEVELOPER)\ //g $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-nginx.service.d/EnvironmentFile
 	sudo sed -i s/VOLUMESFROM=/VOLUMESFROM=--volumes-from\ $(NAMESPACE)-development-$(DEVELOPER)\ /g $(SYSTEMDSERVICEFOLDER)$(NAMESPACE)-nginx.service.d/EnvironmentFile
